@@ -27,6 +27,7 @@ export var roleCarrier = {
                         && structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
                 }
             });
+            towers.sort((a,b) => b.store.getFreeCapacity(RESOURCE_ENERGY) - a.store.getFreeCapacity(RESOURCE_ENERGY))
 
             if(targets.length > 0) {
                 if(creep.transfer(targets[0], RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
@@ -50,26 +51,10 @@ export var roleCarrier = {
             }
         }
         else {
-            var dropped = creep.room.find(FIND_DROPPED_RESOURCES);
-            dropped.sort((a,b) => b.amount - a.amount);
-
-            var containers = creep.room.find(FIND_STRUCTURES, {
-                filter: object => object.structureType === STRUCTURE_CONTAINER
-            });
-            containers.sort((a,b) => b.store[RESOURCE_ENERGY] - a.store[RESOURCE_ENERGY]);
-            if(dropped.length && creep.pickup(dropped[0]) === ERR_NOT_IN_RANGE) {
-                creep.moveTo(dropped[0], {visualizePathStyle: {stroke: '#ffff33'}});
-            }
-            else if(containers.length && containers[0].store[RESOURCE_ENERGY] > 0) {
-                if(creep.withdraw(containers[0], RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(containers[0], {visualizePathStyle: {stroke: '#ffff33'}});
-                }
-            }
-            else {
+            
                 if(creep.withdraw(creep.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                     creep.moveTo(creep.room.storage, {visualizePathStyle: {stroke: '#ffff33'}});
                 }
-            }
             
         }
     }

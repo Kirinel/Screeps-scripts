@@ -19,29 +19,20 @@ export var roleBuilder = {
             const repair_roads = repair_structures.filter(object => object.hits < object.hitsMax && object.structureType === STRUCTURE_ROAD);
             repair_roads.sort((a,b) => a.hits - b.hits);
     
-            const repair_walls = repair_structures.filter(object => object.hits < object.hitsMax && object.structureType === STRUCTURE_WALL);
+            const repair_walls = repair_structures.filter(object => object.hits < object.hitsMax && 
+                object.structureType === STRUCTURE_WALL || object.structureType === STRUCTURE_RAMPART);
             repair_walls.sort((a,b) => a.hits - b.hits);
-    
-            const repair_others = repair_structures.filter(object => object.hits < object.hitsMax 
-                && object.structureType !== STRUCTURE_ROAD
-                && object.structureType !== STRUCTURE_WALL);
-            repair_others.sort((a,b) => a.hits - b.hits);
     
             if(construction_targets.length) {
                 if(creep.build(construction_targets[0]) === ERR_NOT_IN_RANGE) {
                     creep.moveTo(construction_targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
                 }
             }
-            else if(repair_roads.length > 0) {
-                if(creep.repair(repair_roads[0]) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(repair_roads[0], {visualizePathStyle: {stroke: '#ffffff'}});
-                }
-            }
-            else if(repair_others.length > 0) {
-                if(creep.repair(repair_others[0]) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(repair_others[0], {visualizePathStyle: {stroke: '#ffffff'}});
-                }
-            }
+            // else if(repair_roads.length > 0) {
+            //     if(creep.repair(repair_roads[0]) === ERR_NOT_IN_RANGE) {
+            //         creep.moveTo(repair_roads[0], {visualizePathStyle: {stroke: '#ffffff'}});
+            //     }
+            // }
             else if(repair_walls.length > 0) {
                 if(creep.repair(repair_walls[0]) === ERR_NOT_IN_RANGE) {
                     creep.moveTo(repair_walls[0], {visualizePathStyle: {stroke: '#ffffff'}});
@@ -57,11 +48,8 @@ export var roleBuilder = {
             }
         }
         else {
-            var container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                filter: structure => structure.structureType === STRUCTURE_CONTAINER
-            })
-            if(creep.withdraw(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                creep.moveTo(container, {visualizePathStyle: {stroke: '#aa00ff'}});
+            if(creep.withdraw(creep.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                creep.moveTo(creep.room.storage, {visualizePathStyle: {stroke: '#aa00ff'}});
             }
         }
     }

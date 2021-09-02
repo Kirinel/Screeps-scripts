@@ -17,11 +17,14 @@ export var roleUpgrader = {
             }
         }
         else {
-            var closestContainer = creep.room.find(FIND_STRUCTURES, {
-                filter: structure => structure.structureType == STRUCTURE_CONTAINER
-            });
-            if(creep.withdraw(closestContainer[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(closestContainer[0], {visualizePathStyle: {stroke: '#ffaa00'}})
+            // var closestContainer = creep.room.find(FIND_STRUCTURES, {
+            //     filter: structure => structure.structureType == STRUCTURE_CONTAINER
+            // });
+            // if(creep.withdraw(closestContainer[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            //     creep.moveTo(closestContainer[0], {visualizePathStyle: {stroke: '#ffaa00'}})
+            // }
+            if(creep.withdraw(creep.room.storage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(creep.room.storage, {visualizePathStyle: {stroke: '#ffaa00'}})
             }
         }
     }

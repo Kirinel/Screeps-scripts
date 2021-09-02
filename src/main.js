@@ -6,6 +6,8 @@ import { roleCarrier} from './modules/role.carrier'
 import { roleRepairer } from './modules/role.repairer'
 import { roleDefender } from './modules/role.defender'
 import { creepInfo } from './modules/utils'
+import { roleTransferer } from './modules/role.transferer'
+import { roleMover } from './modules/role.mover'
 
 global.energy_sources = [{x: 45, y: 13, roomName: 'E7S48'},
                         {x: 9, y: 7, roomName: 'E7S48'}]
@@ -32,6 +34,8 @@ export const loop = errorMapper(() => {
     var builders = _.filter(Game.creeps, (creep) => creep.memory.role === 'builder');
     var repairers = _.filter(Game.creeps, (creep) => creep.memory.role === 'repairer');
     var defenders = _.filter(Game.creeps, (creep) => creep.memory.role === 'defender');
+    var transferers = _.filter(Game.creeps, (creep) => creep.memory.role === 'transferer');
+    var movers = _.filter(Game.creeps, (creep) => creep.memory.role === 'mover');
 
     // console.log(defenders);
 
@@ -45,9 +49,24 @@ export const loop = errorMapper(() => {
     }
     else if(carriers.length < creepInfo.carrier.num) {
         var newName = 'Carrier' + Game.time;
-        if(Game.spawns['Spawn1'].spawnCreep(creepInfo.carrier.parts, newName, {memory: {role: 'carrier'}}) === OK) {
+        if(Game.spawns['Spawn1'].spawnCreep(creepInfo.carrier.parts, newName, 
+            {memory: {role: 'carrier'}}) === OK) {
             console.log('Spawning new carrier: ' + newName);
         }
+    }
+    else if(transferers.length < creepInfo.transferer.num) {
+        var newName = 'Transferer' + Game.time;
+        if(Game.spawns['Spawn1'].spawnCreep(creepInfo.transferer.parts, newName, 
+            {memory: {role: 'transferer'}}) === OK) {
+            console.log('Spawning new transferer: ' + newName);
+        }
+    }
+    else if(movers.length < creepInfo.mover.num) {
+        var newName = 'Mover' + Game.time;
+        if(Game.spawns['Spawn1'].spawnCreep(creepInfo.mover.parts, newName,
+            {memory: {role: 'mover'}}) === OK) {
+                console.log('Spawning new Mover: ' + newName);
+            };
     }
     else if(upgraders.length < creepInfo.upgrader.num) {
         var newName = 'Upgrader' + Game.time;
@@ -117,17 +136,25 @@ export const loop = errorMapper(() => {
         if(creep.memory.role === 'defender') {
             roleDefender.run(creep);
         }
+        if(creep.memory.role === 'transferer') {
+            roleTransferer.run(creep);
+        }
+        if(creep.memory.role === 'mover' || creep.memory.role === 'Mover') {
+            roleMover.run(creep);
+        }
     }
 
+
+    //tower movement
     var towers = Game.spawns['Spawn1'].room.find(FIND_STRUCTURES, {
         filter: structure => structure.structureType === STRUCTURE_TOWER
     })
     if(towers.length) {
         var damaged_structures = towers[0].room.find(FIND_STRUCTURES, {
             filter: (structure) => (structure.hits < structure.hitsMax) 
-                // && structure.structureType != STRUCTURE_WALL
+                && structure.structureType != STRUCTURE_WALL
                 && structure.hits <= 1e6
-                // && structure.structureType !== STRUCTURE_RAMPART)
+                && structure.structureType !== STRUCTURE_RAMPART
                 // || (structure.structureType === STRUCTURE_RAMPART && structure.hits < 10000)
         })
         damaged_structures.sort((a,b) => a.hits - b.hits)
@@ -149,4 +176,11 @@ export const loop = errorMapper(() => {
             }
         }
     }
+
+    //link transfer
+    const linkFrom = Game.spawns['Spawn1'].room.lookForAt('structure', 46, 12)[0];
+
+    const linkTo = Game.spawns['Spawn1'].room.lookForAt('structure', 11,19,)[0]
+
+    linkFrom.transferEnergy(linkTo);
 })

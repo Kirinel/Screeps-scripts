@@ -23,5 +23,11 @@ export var roleHarvester = {
                     creep.moveTo(source, {visualizePathStyle: {stroke: '#ffaa00'}});
                 }
             }
+            if(creep.store.getFreeCapacity() == 0) {
+                var nearest_link = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+                    filter: (struct) => struct.structureType == STRUCTURE_LINK
+                })
+                creep.transfer(nearest_link, RESOURCE_ENERGY);
+            }
     }
 };
