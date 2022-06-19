@@ -3,33 +3,39 @@ export var roleRepairer = {
 
     /** @param {Creep} creep **/
     run: function(creep) {
-        var prev_target = Game.getObjectById(creep.memory.cur_target);
-        if(creep.store[RESOURCE_ENERGY] === 0 || !prev_target || //当前无能量，无修补目标，修补目标已满时重新寻找修补目标
-            (prev_target && prev_target.hits === prev_target.hitsMax)) {
-                creep.memory.cur_target = null;
+        if(creep.store[RESOURCE_ENERGY] == 0) {
+            creep.memory.building = false;
+        }
+        if(creep.store.getFreeCapacity() == 0) {
+            creep.memory.building = true;
+        }
 
-                const repair_structures = creep.room.find(FIND_STRUCTURES);
-
-                const repair_walls = repair_structures.filter(object => object.hits < object.hitsMax && object.structureType === STRUCTURE_WALL);
-                repair_walls.sort((a,b) => a.hits - b.hits);
-
-                const repair_others = repair_structures.filter(object => object.hits < object.hitsMax 
-                    && object.structureType !== STRUCTURE_ROAD
-                    && object.structureType !== STRUCTURE_WALL);
-                repair_others.sort((a,b) => a.hits - b.hits);
-
-                if(repair_others.length > 0) {
-                    creep.memory.cur_target = repair_others[0].id;
-                }
-                else if(repair_walls.length > 0) {
-                    creep.memory.cur_target = repair_walls[0].id;
+        if(creep.memory.building) {
+    
+            const repair_structures = creep.room.find(FIND_STRUCTURES);
+    
+            const repair_walls = repair_structures.filter(object => object.hits < object.hitsMax && 
+                object.structureType === STRUCTURE_WALL || object.structureType === STRUCTURE_RAMPART);
+            repair_walls.sort((a,b) => a.hits - b.hits);
+    
+            
+            if(repair_walls.length > 0) {
+                if(creep.repair(repair_walls[0]) === ERR_NOT_IN_RANGE) {
+                    creep.moveTo(repair_walls[0], {visualizePathStyle: {stroke: '#ffffff'}});
                 }
             }
-        
-        var cur_target = Game.getObjectById(creep.memory.cur_target);
-        if(cur_target) {
-            if(creep.repair(cur_target) === ERR_NOT_IN_RANGE) {
-                creep.moveTo(cur_target, {visualizePathStyle: {stroke: '#ffffff'}});
+            else if(creep.room.storage && creep.room.storage.store.getFreeCapacity() > 0 && creep.transfer(creep.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                creep.moveTo(creep.room.storage, {visualizePathStyle: {stroke: '#ffffff'}})
+            }
+            else  {
+                if(creep.upgradeController(creep.room.controller) === ERR_NOT_IN_RANGE) {
+                    creep.moveTo(creep.room.controller, {visualizePathStyle: {stroke: '#ffffff'}});
+                }
+            }
+        }
+        else {
+            if(creep.withdraw(creep.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                creep.moveTo(creep.room.storage, {visualizePathStyle: {stroke: '#aa00ff'}});
             }
         }
     }
