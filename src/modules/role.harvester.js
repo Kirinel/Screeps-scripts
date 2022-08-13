@@ -3,20 +3,32 @@ export var roleHarvester = {
 
     /** @param {Creep} creep **/
     run: function(creep) {
-            
-            var sources = creep.room.find(FIND_SOURCES);
-            if(creep.harvest(sources[creep.memory.workingLoc]) === ERR_NOT_IN_RANGE) {
-                creep.moveTo(sources[creep.memory.workingLoc], {reusePath: 50,visualizePathStyle: {stroke: '#ffaa00'}});
-            }
-
-            if(creep.store.getFreeCapacity() < 28) {
-                var nearest_link = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        if(!creep.memory.workingSite) {
+            creep.memory.workingSite = creep.room.find(FIND_SOURCES)[creep.memory.workingLoc];
+        }
+        var res = creep.harvest(Game.getObjectById(creep.memory.workingSite.id))
+        if(res === ERR_NOT_IN_RANGE) {
+            creep.moveTo(Game.getObjectById(creep.memory.workingSite.id), {reusePath: 50, visualizePathStyle: {stroke: '#ffaa00'}});
+        }
+        else if(res === OK && !creep.memory.transferTo) {
+            var nearest_link = creep.pos.findInRange(FIND_STRUCTURES, 3, {
                     filter: (struct) => struct.structureType == STRUCTURE_LINK
-                })
-                if(creep.transfer(nearest_link, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(nearest_link);
-                }
+                });
+            if(nearest_link.length) {
+                creep.memory.transferTo = nearest_link[0].id;
             }
+                
+        }
+        else if(res === OK && creep.memory.transferTo && Game.getObjectById(creep.memory.transferTo)) {
+            const target = Game.getObjectById(creep.memory.transferTo);
+            if(creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                creep.moveTo(target);
+            }
+        }
+        else if(!Game.getObjectById(creep.memory.transferTo)) {
+            creep.memory.transferTo = null;
+        }
+        
     }
 };
 
@@ -45,12 +57,17 @@ export var roleRemoteHarvester = {
 
     /** @param {Creep} creep **/
     run: function(creep) {
-        if(creep.room.name === creep.memory.workingRoom) {
+
+        if(creep.memory.workingRoom === 'E9S51' && creep.ticksToLive < 20) {
+            creep.memory.bornIn = '';
+        }
+        
+        if(creep.room.name === creep.memory.workingRoom && !creep.memory.workingSite) {
             creep.memory.arrived = true;
             creep.memory.workingSite = creep.room.find(FIND_SOURCES)[creep.memory.workingLoc];
         }
         if(creep.room.name != creep.memory.workingRoom && !creep.memory.arrived) {
-            creep.moveTo(new RoomPosition(25, 25, creep.memory.workingRoom))
+            creep.moveTo(new RoomPosition(25, 25, creep.memory.workingRoom), {reusePath:200});
         }
         else {
             var res = creep.harvest(Game.getObjectById(creep.memory.workingSite.id))
@@ -58,23 +75,22 @@ export var roleRemoteHarvester = {
                 creep.moveTo(Game.getObjectById(creep.memory.workingSite.id), {reusePath: 50, visualizePathStyle: {stroke: '#ffaa00'}});
             }
             else if(res === OK && !creep.memory.transferTo) {
-                var nearest_link = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                    filter: (struct) => struct.structureType == STRUCTURE_LINK
-                })
-                if(nearest_link) {
-                    creep.memory.transferTo = nearest_link.id;
+                var nearest_container = creep.pos.findInRange(FIND_STRUCTURES, 3, {
+                    filter: (struct) => struct.structureType == STRUCTURE_CONTAINER
+                });
+                if(nearest_container.length) {
+                    creep.memory.transferTo = nearest_container[0].id;
                 }
                 else {
-                    var nearest_container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                        filter: (struct) => struct.structureType == STRUCTURE_CONTAINER
+                    var nearest_link = creep.pos.findInRange(FIND_STRUCTURES, 3, {
+                        filter: (struct) => struct.structureType == STRUCTURE_LINK
                     });
-                    if(nearest_container) {
-                        creep.memory.transferTo = nearest_container.id;
+                    if(nearest_link.length) {
+                        creep.memory.transferTo = nearest_link[0].id;
                     }
                 }
             }
-
-            if(creep.memory.transferTo) {
+            else if(res === OK && creep.memory.transferTo && Game.getObjectById(creep.memory.transferTo)) {
                 const target = Game.getObjectById(creep.memory.transferTo);
                 if(target.hits < target.hitsMax) {
                     creep.repair(target);
@@ -84,6 +100,9 @@ export var roleRemoteHarvester = {
                         creep.moveTo(target);
                     }
                 }
+            }
+            else if(!Game.getObjectById(creep.memory.transferTo)) {
+                creep.memory.transferTo = null;
             }
         }
             
